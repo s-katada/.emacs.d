@@ -80,6 +80,7 @@
     (setq-local omnisharp-hover-info t)
     (setq-local omnisharp-eldoc-support nil)))
 
+;; 定期的に変えないといけない
 (setq openai-key "***REMOVED***")
 
 ; dep key (setq openai-key "[YOUR API KEY]")
