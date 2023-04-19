@@ -1,0 +1,10 @@
+.cache
+auto-save-list
+elpa
+.lsp-session-v1
+recentf
+straight/
+request/
+ascii-logo.txt
+projects
+projectile-bookmarks.eld
