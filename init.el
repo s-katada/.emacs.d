@@ -35,6 +35,7 @@
 (bind-key "s-z" 'undo)
 (bind-key "s-Z" 'undo-redo)
 (bind-key "C-;" 'comment-line)
+(bind-key "C-c C-c" 'scroll-down-command)
 
 ;; yes noで答えるのを y nにする
 (fset 'yes-or-no-p 'y-or-n-p)
