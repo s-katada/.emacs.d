@@ -40,46 +40,41 @@
 ;; yes noで答えるのを y nにする
 (fset 'yes-or-no-p 'y-or-n-p)
 
-; C# modeの設定
-(use-package csharp-mode
+(use-package prog-mode
+  :hook(prog-mode . copilot-mode))
+
+;; copilotの設定
+(use-package copilot
+  :straight (:host github :repo "zerolfx/copilot.el" :files ("dist" "*.el"))
   :ensure t
-  :mode ("\\.cs\\'" . csharp-mode)
-  :hook (csharp-mode . my-csharp-mode-hook)
-  :config
-  (defun my-csharp-mode-hook ()
-    ;; indentの設定
-    (setq c-basic-offset 4)
-    (c-set-offset 'substatement-open 0)
-    (c-set-offset 'brace-list-open '+)
-    (c-set-offset 'arglist-intro '+)
-    (c-set-offset 'arglist-close 0)
+  :init
+  (defun my-tab ()
+    (interactive "*")
+    (or (copilot-accept-completion)
+	(company-indent-or-complete-common nil)))
+  (bind-key "TAB" 'my-tab)
+  :bind(("M-]" . copilot-next-completion)
+	("M-[" . copilot-previous-completion)))
 
-    ;; company-modeの設定
-    (require 'company)
-    (setq-local company-minimum-prefix-length 1)
-    (setq-local company-idle-delay 0.3)
-    (setq-local company-backends '(company-capf))
+;; pytonの設定
+(use-package elpy
+  :ensure t
+  :init
+  (elpy-enable)
+  (setq elpy-rpc-backend "jedi"))
 
-    ;; flycheckの設定
-    (flycheck-mode)
-    (setq-local flycheck-checker 'csharp-omnisharp)
+(use-package company-jedi
+  :ensure t
+  :init
+  (add-to-list 'company-backends 'company-jedi))
 
-    ;; omnisharpの設定
-    (require 'omnisharp)
-    (setq-local omnisharp-server-executable-path "omnisharp")
-    (setq-local omnisharp--curl-executable-path "curl")
-    (setq-local omnisharp--curl-timeout 30)
-    (setq-local omnisharp-company-do-template-completion t)
-    (setq-local omnisharp-company-prompt-on-single-candidate nil)
-    (setq-local omnisharp-company-sort-results nil)
-    (setq-local omnisharp-company-strip-trailing-whitespace nil)
-    (setq-local omnisharp-imenu-support nil)
-    (setq-local omnisharp-auto-complete-want-documentation nil)
-    (setq-local omnisharp-auto-complete-want-importable-types nil)
-    (setq-local omnisharp-auto-complete-want-snippets nil)
-    (setq-local omnisharp-find-usages-ignore-generated-code t)
-    (setq-local omnisharp-hover-info t)
-    (setq-local omnisharp-eldoc-support nil)))
+(use-package python
+  :ensure t
+  :init
+  (add-hook 'python-mode-hook
+            (lambda ()
+              (setq indent-tabs-mode nil)
+              (setq python-indent-offset 2))))
 
 ;; 定期的に変えないといけない
 (setq openai-key "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")
@@ -248,7 +243,7 @@
                                   (border-color . "#1f1f1f")
                                   (border-width . 1)))
   :config
-  (setq flycheck-posframe-position 'window-top-center
+  (setq flycheck-posframe-position 'window-bottom-center
 	flycheck-posframe-border-width 1))
 
 (use-package smooth-scrolling
