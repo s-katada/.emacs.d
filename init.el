@@ -4,7 +4,7 @@
 ;;; Code:
 (require 'package)
 (add-to-list 'package-archives
-      '("melpa" . "https://melpa.org/packages/") t);; リストの先頭にmelpaを追加するためのt
+	     '("melpa" . "https://melpa.org/packages/") t);; リストの先頭にmelpaを追加するためのt
 (package-initialize)
 
 (unless (package-installed-p 'use-package)
