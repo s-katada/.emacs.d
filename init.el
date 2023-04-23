@@ -40,6 +40,15 @@
 ;; yes noで答えるのを y nにする
 (fset 'yes-or-no-p 'y-or-n-p)
 
+(use-package fish-mode
+  :ensure t
+  :mode "\\.fish\\'"
+  :config
+  (add-hook 'fish-mode-hook
+	    (lambda ()
+	      (setq indent-tabs-mode nil)
+	      (setq fish-indent-offset 2))))
+
 (use-package prog-mode
   :hook(prog-mode . copilot-mode))
 
@@ -63,10 +72,10 @@
   (elpy-enable)
   (setq elpy-rpc-backend "jedi"))
 
-(use-package company-jedi
-  :ensure t
-  :init
-  (add-to-list 'company-backends 'company-jedi))
+;; (use-package company-jedi
+;;   :ensure t
+;;   :init
+;;   (add-to-list 'company-backends 'company-jedi))
 
 (use-package python
   :ensure t
@@ -88,7 +97,7 @@
   :bind
   ("C-x C-g" . chatgpt))
 
-(add-hook 'window-size-change-functions 'my-resize-buffer)
+;; (add-hook 'window-size-change-functions 'my-resize-buffer)
 
 (use-package codegpt
   :straight (:host github :repo "emacs-openai/codegpt"))
@@ -315,9 +324,15 @@
   (setq company-minimum-prefix-length 1)
   (setq company-idle-delay 0.1)
   (setq company-dabbrev-downcase nil)
+  (yas-global-mode 1)
   :bind
   (:map company-active-map
         ("C-h" . 'backward-delete-char)))
+
+;; (use-package yasnippet
+;;   :ensure t
+;;   :config
+;;   (yas-global-mode 1))
 
 (use-package ace-window
   :ensure t
@@ -433,18 +448,3 @@
 	      ("C-," . lsp-ui-peek-jump-backward)))
 
 ;;; init.el ends here
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(package-selected-packages
-   '(chatgpt yaml-mode web-mode use-package typescript-mode treemacs smooth-scrolling request multiple-cursors modus-themes mode-icons lsp-ui haml-mode flycheck-posframe exec-path-from-shell doom-modeline dashboard counsel-projectile company all-the-icons))
- '(warning-suppress-log-types '((lsp-mode) (lsp-mode)))
- '(warning-suppress-types '((lsp-mode))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
