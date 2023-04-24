@@ -98,10 +98,10 @@
   (elpy-enable)
   (setq elpy-rpc-backend "jedi"))
 
-;; (use-package company-jedi
-;;   :ensure t
-;;   :init
-;;   (add-to-list 'company-backends 'company-jedi))
+(use-package company-jedi
+  :ensure t
+  :init
+  (add-to-list 'company-backends 'company-jedi))
 
 (use-package python
   :ensure t
@@ -112,7 +112,7 @@
               (setq python-indent-offset 2))))
 
 ;; 定期的に変えないといけない
-(setq openai-key "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")
+(setq openai-key "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")
 
 ; dep key (setq openai-key "[YOUR API KEY]")
 (use-package openai
@@ -142,10 +142,12 @@
 
 (use-package multiple-cursors
   :ensure t
-  :bind (("C-x C-a" . mc/mark-all-like-this)
-         ("C-x C-d" . mc/mark-all-like-this-in-defun)
-         ("C-x C-e" . mc/edit-ends-of-lines)
-         ("C-x C-r" . mc/mark-all-in-region-regexp)))
+  :config
+  (define-key mc/keymap (kbd "C-h") 'delete-backward-char)
+  (define-key global-map (kbd "C-x C-a") 'mc/mark-all-like-this)
+  (define-key global-map (kbd "C-x C-d") 'mc/mark-all-like-this-in-defun)
+  (define-key global-map (kbd "C-x C-e") 'mc/edit-ends-of-lines)
+  (define-key global-map (kbd "C-x C-r") 'mc/mark-all-in-region-regexp))
 
 (use-package mode-icons
   :ensure t
@@ -337,7 +339,11 @@
    ("C-x C-f" . counsel-find-file)
    ("C-x b" . counsel-switch-buffer)
    ("C-x C-b" . counsel-recentf)
-   ("C-x C-i" . counsel-git)))
+   ("C-x C-i" . counsel-git))
+  :config
+  (define-key counsel-find-file-map (kbd "C-h") 'delete-backward-char)
+  (define-key counsel-find-file-map (kbd "C-b") 'counsel-up-directory)
+  (define-key counsel-find-file-map (kbd "C-f") 'counsel-down-directory))
 
 (use-package counsel-projectile
   :config
@@ -354,11 +360,6 @@
   :bind
   (:map company-active-map
         ("C-h" . 'backward-delete-char)))
-
-;; (use-package yasnippet
-;;   :ensure t
-;;   :config
-;;   (yas-global-mode 1))
 
 (use-package ace-window
   :ensure t
