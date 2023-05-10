@@ -218,6 +218,13 @@
     (setq treemacs-show-hidden-files t)
     (setq treemacs-silent-filewatch 'post-command-hook)))
 
+(use-package treemacs-icons-dired
+  :ensure t)
+
+(use-package dired
+  :config
+  (add-hook 'dired-mode-hook 'treemacs-icons-dired-mode))
+
 (use-package projectile
   :ensure t
   :config
@@ -289,12 +296,6 @@
   (smooth-scrolling-mode 1)
   (setq smooth-scroll-margin 5))
 
-(use-package dired
-  :custom
-  (dired-use-ls-dired nil)
-  :hook
-  (dired-mode . (lambda () (display-line-numbers-mode -1))))
-
 (use-package frame
   :config
   (toggle-frame-maximized)
@@ -321,7 +322,8 @@
 
 (use-package ivy
   :bind
-  (("C-s" . swiper))
+  (("C-s" . swiper)
+   ("C-h" . ivy-backward-delete-char))
   :custom
   (ivy-use-vertual-buffers t)
   :config
