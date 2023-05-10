@@ -185,22 +185,22 @@
                       :background "black"
                       :foreground "gray"))
 
-(use-package dashboard
-  :ensure t
-  :config
-  (dashboard-setup-startup-hook)
-  (setq dashboard-startup-banner "~/.emacs.d//ascii-logo.txt")
-  (setq dashboard-items '((recents . 20)
-                          (projects . 20)
-                          (agenda . 20)
-                          (registers . 20)))
-  (setq dashboard-set-heading-icons t)
-  (setq dashboard-set-file-icons t)
-  (setq dashboard-set-navigator t)
-  (setq dashboard-center-content t)
-  (setq dashboard-show-shortcuts nil)
-  (setq dashboard-set-footer nil)
-  (setq dashboard-banner-logo-title "↑ My TellPhone Number! Call Me!"))
+;; (use-package dashboard
+;;   :ensure t
+;;   :config
+;;   (dashboard-setup-startup-hook)
+;;   (setq dashboard-startup-banner "~/.emacs.d//ascii-logo.txt")
+;;   (setq dashboard-items '((recents . 20)
+;;                           (projects . 20)
+;;                           (agenda . 20)
+;;                           (registers . 20)))
+;;   (setq dashboard-set-heading-icons t)
+;;   (setq dashboard-set-file-icons t)
+;;   (setq dashboard-set-navigator t)
+;;   (setq dashboard-center-content t)
+;;   (setq dashboard-show-shortcuts nil)
+;;   (setq dashboard-set-footer nil)
+;;   (setq dashboard-banner-logo-title "↑ My TellPhone Number! Call Me!"))
 
 (use-package treemacs
   :ensure t
