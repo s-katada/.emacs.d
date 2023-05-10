@@ -201,7 +201,7 @@
 ;;   (setq dashboard-show-shortcuts nil)
 ;;   (setq dashboard-set-footer nil)
 ;;   (setq dashboard-banner-logo-title "↑ My TellPhone Number! Call Me!"))
-
+(add-to-list 'image-types 'svg)
 (use-package treemacs
   :ensure t
   :defer t
