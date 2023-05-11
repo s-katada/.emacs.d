@@ -201,7 +201,13 @@
 ;;   (setq dashboard-show-shortcuts nil)
 ;;   (setq dashboard-set-footer nil)
 ;;   (setq dashboard-banner-logo-title "↑ My TellPhone Number! Call Me!"))
+
+;; ファイルを選択したらtreemacsを閉じる設定を追加したい
 (add-to-list 'image-types 'svg)
+(defun treemacs-active-p ()
+  "Return non-nil if the active window is a treemacs window."
+  (eq (selected-window) (treemacs-get-local-window)))
+
 (use-package treemacs
   :ensure t
   :defer t
@@ -216,7 +222,8 @@
     (setq treemacs-fringe-indicator-mode 'always)
     (setq treemacs-show-cursor t)
     (setq treemacs-show-hidden-files t)
-    (setq treemacs-silent-filewatch 'post-command-hook)))
+    (setq treemacs-silent-filewatch 'post-command-hook))
+  (treemacs-git-mode 'extended))
 
 (use-package treemacs-icons-dired
   :ensure t)
