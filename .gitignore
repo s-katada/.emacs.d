@@ -11,3 +11,4 @@ projectile-bookmarks.eld
 elpy
 image-dired
 snippets
+.env.el
