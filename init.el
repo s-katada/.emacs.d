@@ -95,18 +95,6 @@
   :bind(("M-]" . copilot-next-completion)
 	("M-[" . copilot-previous-completion)))
 
-;; pytonの設定
-(use-package elpy
-  :ensure t
-  :init
-  (elpy-enable)
-  (setq elpy-rpc-backend "jedi"))
-
-(use-package company-jedi
-  :ensure t
-  :init
-  (add-to-list 'company-backends 'company-jedi))
-
 (use-package python
   :ensure t
   :init
@@ -114,25 +102,6 @@
             (lambda ()
               (setq indent-tabs-mode nil)
               (setq python-indent-offset 2))))
-
-;; 定期的に変えないといけない
-(setq openai-key "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")
-
-; dep key (setq openai-key "[YOUR API KEY]")
-(use-package openai
-  :straight (:host github :repo "emacs-openai/openai"))
-
-(use-package chatgpt
-  :straight (:host github :repo "emacs-openai/chatgpt")
-  :bind
-  ("C-x C-g" . chatgpt))
-
-;; (add-hook 'window-size-change-functions 'my-resize-buffer)
-
-(use-package codegpt
-  :straight (:host github :repo "emacs-openai/codegpt"))
-(use-package dall-e
-  :straight (:host github :repo "emacs-openai/dall-e"))
 
 (use-package hydra
   :ensure t)
@@ -180,7 +149,7 @@
         doom-modeline-vcs-max-length 40
         doom-modeline-env-version t
         doom-modeline-env-enable-ruby t
-        doom-modeline-checker-simple-format t
+        doom-modeline-check-simple-format t
         doom-modeline-indent-info t)
   (set-face-attribute 'mode-line nil
                       :background "#4b0082"
@@ -206,28 +175,28 @@
 ;;   (setq dashboard-set-footer nil)
 ;;   (setq dashboard-banner-logo-title "↑ My TellPhone Number! Call Me!"))
 
-;; ファイルを選択したらtreemacsを閉じる設定を追加したい
-(add-to-list 'image-types 'svg)
-(defun treemacs-active-p ()
-  "Return non-nil if the active window is a treemacs window."
-  (eq (selected-window) (treemacs-get-local-window)))
+;; ;; ファイルを選択したらtreemacsを閉じる設定を追加したい
+;; (add-to-list 'image-types 'svg)
+;; (defun treemacs-active-p ()
+;;   "Return non-nil if the active window is a treemacs window."
+;;   (eq (selected-window) (treemacs-get-local-window)))
 
-(use-package treemacs
-  :ensure t
-  :defer t
-  :bind
-  ("s-b" . treemacs)
-  :custom
-  (treemacs-width 50)
-  :config
-  (progn
-    (setq treemacs-follow-mode t)
-    (setq treemacs-filewatch-mode t)
-    (setq treemacs-fringe-indicator-mode 'always)
-    (setq treemacs-show-cursor t)
-    (setq treemacs-show-hidden-files t)
-    (setq treemacs-silent-filewatch 'post-command-hook))
-  (treemacs-git-mode 'extended))
+;; (use-package treemacs
+;;   :ensure t
+;;   :defer t
+;;   :bind
+;;   ("s-b" . treemacs)
+;;   :custom
+;;   (treemacs-width 50)
+;;   :config
+;;   (progn
+;;     (setq treemacs-follow-mode t)
+;;     (setq treemacs-filewatch-mode t)
+;;     (setq treemacs-fringe-indicator-mode 'always)
+;;     (setq treemacs-show-cursor t)
+;;     (setq treemacs-show-hidden-files t)
+;;     (setq treemacs-silent-filewatch 'post-command-hook))
+;;   (treemacs-git-mode 'extended))
 
 (use-package treemacs-icons-dired
   :ensure t)
@@ -236,10 +205,10 @@
   :config
   (add-hook 'dired-mode-hook 'treemacs-icons-dired-mode))
 
-(use-package projectile
-  :ensure t
-  :config
-  (projectile-mode 1))
+;; (use-package projectile
+;;   :ensure t
+;;   :config
+;;   (projectile-mode 1))
 
 (use-package emacs
   :custom
