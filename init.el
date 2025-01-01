@@ -355,6 +355,7 @@
   (:map company-active-map
         ("C-h" . 'backward-delete-char)))
 
+;; copilot-modeを全てのプログラムモードで有効にする
 (use-package prog-mode
   :hook(prog-mode . copilot-mode))
 
