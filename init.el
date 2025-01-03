@@ -297,6 +297,16 @@
 (use-package typescript-mode
   :ensure t)
 
+;; rust-mode
+(use-package rust-mode
+  :ensure t
+  :mode (("\\.rs\\'" . rust-mode)))
+
+;; csharp-mode
+(use-package csharp-mode
+  :ensure t
+  :mode (("\\.cs\\'" . csharp-mode)))
+
 ;; lspの設定
 (use-package lsp-mode
   :ensure t
