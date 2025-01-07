@@ -304,7 +304,6 @@
 
 ;; csharp-mode
 (use-package csharp-mode
-  :ensure t
   :mode (("\\.cs\\'" . csharp-mode)))
 
 ;; lspの設定
@@ -312,7 +311,10 @@
   :ensure t
   :hook
   ((ruby-mode . lsp)
-   (web-mode . lsp))
+   (web-mode . lsp)
+   (css-mode . lsp)
+   (rust-mode . lsp)
+   (csharp-mode .lsp))
   :config
   ;; LSPのフォーマット機能を無効にする
   (setq lsp-enable-on-type-formatting nil
@@ -352,6 +354,13 @@
   :ensure t
   :config
   (yas-global-mode 1))
+
+;; (use-package tree-sitter
+;;   :ensure t
+;;   :config
+;;   (require 'tree-sitter-langs)
+;;   (global-tree-sitter-mode)
+;;   (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
 
 ;; 補完候補表示
 (use-package company
