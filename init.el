@@ -1,4 +1,5 @@
-;; パッケージマネージャーのアルパカをインストール
+;;; package --- パッケージマネージャーのアルパカをインストール
+
 (defvar elpaca-installer-version 0.8)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
 (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
@@ -40,8 +41,22 @@
 (elpaca elpaca-use-package
   ;;Enable use-package :ensure support for Elpaca.
   (elpaca-use-package-mode))
-
 (elpaca-wait)
+
+;; スクロールの設定
+(setq scroll-conservatively 50)
+
+;; 警告レベルを設定
+(setq warning-minimum-level :error)
+(setq switch-to-buffer-in-dedicated-window nil)
+
+;; ビープ音を消す
+(setq ring-bell-function 'ignore)
+(setq visible-bell 1)
+
+;; エレクトリックインデントを有効にする
+(electric-pair-mode t)
+
 ;; package.elを使わない
 (setq package-enable-at-startup nil)
 
@@ -55,9 +70,9 @@
 ;; yes noで答えるのを y nにする
 (fset 'yes-or-no-p 'y-or-n-p)
 
-;;; *.~ とかのバックアップファイルを作らない
+;; *.~ とかのバックアップファイルを作らない
 (setq make-backup-files nil)
-;;; .#* とかのバックアップファイルを作らない
+;; .#* とかのバックアップファイルを作らない
 (setq auto-save-default nil)
 
 ;; 現在行にハイライトを設定
@@ -82,11 +97,11 @@
   :config
   (tool-bar-mode -1))
 
-;; テーマ
-(use-package modus-themes
-  :ensure t
-  :config
-  (load-theme 'modus-vivendi t))
+;; ;; テーマ
+;; (use-package modus-themes
+;;   :ensure t
+;;   :config
+;;   (load-theme 'modus-vivendi t))
 
 ;; modeline
 (use-package doom-modeline
@@ -156,13 +171,6 @@
   :config
   (global-auto-revert-mode t))
 
-;; スクロールをなめらかにする
-(use-package smooth-scrolling
-  :ensure
-  :config
-  (smooth-scrolling-mode 1)
-  (setq smooth-scroll-margin 5))
-
 ;; 行数表示
 (use-package display-line-numbers
   :config
@@ -189,13 +197,14 @@
 ;; I-searchを強化する
 (use-package consult
   :ensure t
+  :init
+  (load-theme 'modus-vivendi t)
   :bind (
          ("C-s" . consult-line)
          ("C-x b" . consult-buffer)
 	 ("M-g g" . consult-goto-line)
 	 ("C-x C-b" . consult-recent-file)
-	 ("C-x C-i" . consult-projectile)
-	 )
+	 ("C-x C-i" . consult-projectile))
   :config
   ;; 一部のコマンドを自動的に`consult`に置き換える
   (setq consult-async-min-input 2)  ;; 非同期検索の最小入力数
@@ -300,11 +309,24 @@
 ;; rust-mode
 (use-package rust-mode
   :ensure t
-  :mode (("\\.rs\\'" . rust-mode)))
+  :mode (("\\.rs\\'" . rust-mode))
+  :config
+  (setq indent-tabs-mode nil))
 
 ;; csharp-mode
 (use-package csharp-mode
   :mode (("\\.cs\\'" . csharp-mode)))
+
+;; yaml-mode
+(use-package yaml-mode
+  :ensure t
+  :mode (("\\.yml\\'" . yaml-mode)
+	 ("\\.yaml\\'" . yaml-mode)))
+
+;; haml-mode
+(use-package haml-mode
+  :ensure t
+  :mode (("\\.haml\\'" . haml-mode)))
 
 ;; lspの設定
 (use-package lsp-mode
@@ -341,19 +363,35 @@
   (lsp-ui-doc-use-webkit t)
   (lsp-ui-peek-enable t)
   (lsp-ui-peek-show-directory t)
+  (lsp-eldoc-enable-hover t)
   (lsp-ui-peek-peek-height 20)
-  (lsp-ui-sideline-enable nil)
+  (lsp-ui-sideline-enable t)
   :bind (:map lsp-ui-mode-map
 	      ("M-." . lsp-ui-peek-find-definitions)
 	      ("M-?" . lsp-ui-peek-find-references)
 	      ("C-." . lsp-ui-peek-jump-forward)
 	      ("C-," . lsp-ui-peek-jump-backward)))
 
-;; lsp-modeが依存するパッケージ
-(use-package yasnippet
-  :ensure t
+;; flymakeを見やすくする
+(use-package flymake
+  :hook (prog-mode . flymake-mode)
   :config
-  (yas-global-mode 1))
+  (set-face-attribute 'flymake-error nil
+		      :underline "red"
+		      :weight 'bold)
+  (set-face-attribute 'flymake-warning nil
+		      :underline "yellow"
+		      :weight 'bold)
+  (set-face-attribute 'flymake-note nil
+		      :underline "green"
+		      :weight 'bold))
+
+(use-package eldoc-box
+  :ensure t
+  :hook
+  (eldoc-mode . eldoc-box-hover-mode))
+  ;; :config
+  ;; (setq eldoc-mode-line-string t))
 
 ;; (use-package tree-sitter
 ;;   :ensure t
@@ -374,9 +412,13 @@
   (:map company-active-map
         ("C-h" . 'backward-delete-char)))
 
-;; copilot-modeを全てのプログラムモードで有効にする
 (use-package prog-mode
   :hook(prog-mode . copilot-mode))
+
+(use-package dockerfile-mode
+  :ensure t
+  :mode (("\\Dockerfile\\'" . docker-mode)
+	 ("\\dockerfile\\'" . docker--mode)))
 
 ;; copilotの設定
 (use-package copilot
@@ -391,3 +433,10 @@
 	("M-[" . copilot-previous-completion))
   :config
   (setq copilot-indent-offset-warning-disable t))
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   '(yaml-mode web-mode vertico typescript-mode rust-mode projectile orderless multiple-cursors marginalia haml-mode consult company ace-window)))
