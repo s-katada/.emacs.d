@@ -68,6 +68,9 @@
  ;; If there is more than one, they won't work right.
  '(hl-line ((t (:background "grey20")))))
 
+;; エレクトリックインデントを有効にする
+(electric-pair-mode t)
+
 ;; 空白を見やすくする
 (use-package whitespace
   :ensure nil
@@ -101,7 +104,13 @@
   :init
   (vertico-mode)
   :config
-  (setq vertico-count 30))
+  (setq vertico-count 30)
+  ;; ミニバッファでのキーバインド設定
+  :bind ((:map minibuffer-local-map
+               ("C-w" . backward-kill-word))  ;; 単語単位で削除
+         (:map vertico-map
+               ("C-w" . vertico-directory-delete-word)))  ;; パス区切りで削除
+  :hook (rfn-eshadow-update-overlay . vertico-directory-tidy))  ;; 自動的にパスを整理
 
 ;; Orderlessの設定
 (use-package orderless
@@ -121,7 +130,9 @@
 ;; windowサイズを修正
 (use-package frame
   :config
-  (toggle-frame-maximized)
+  ;; 起動時のみ最大化（既に最大化されている場合はスキップ）
+  (unless (frame-parameter nil 'fullscreen)
+    (toggle-frame-maximized))
   (set-frame-parameter nil 'alpha 85)
   (if (>= (frame-width) 543)
       (set-face-attribute 'default (selected-frame) :height 180)))
@@ -254,3 +265,234 @@
   :ensure
   :hook (prog-mode . rainbow-delimiters-mode))
 
+;; コード補完UI
+(use-package company
+  :ensure
+  :init
+  (global-company-mode)
+  :config
+  (setq company-idle-delay 0.1)  ; 0.1秒後に補完候補を表示
+  (setq company-minimum-prefix-length 2)  ; 2文字入力後に補完開始
+  (setq company-selection-wrap-around t)  ; 候補の最後から最初に戻る
+  :bind (:map company-active-map
+              ("C-n" . company-select-next)
+              ("C-p" . company-select-previous)
+              ("C-h" . delete-backward-char)))  ; C-hをバックスペースに
+
+;; tree-sitter文法のインストール
+(use-package treesit
+  :ensure nil  ; 組み込みパッケージ
+  :config
+  ;; tree-sitter文法の自動インストール
+  (setq treesit-language-source-alist
+        '((typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
+          (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
+          (dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile" "main" "src")
+          (rust "https://github.com/tree-sitter/tree-sitter-rust" "v0.21.2" "src")))
+
+  ;; 文法がインストールされていない場合は自動インストール
+  (dolist (lang '(typescript tsx dockerfile rust))
+    (unless (treesit-language-available-p lang)
+      (treesit-install-language-grammar lang))))
+
+;; eglot (LSPクライアント)
+(use-package eglot
+  :ensure nil  ; 組み込みパッケージ (Emacs 29+)
+  :hook ((typescript-ts-mode . eglot-ensure)
+         (tsx-ts-mode . eglot-ensure)
+         (ruby-mode . eglot-ensure)
+         (ruby-ts-mode . eglot-ensure)
+         (markdown-mode . eglot-ensure)
+         (dockerfile-ts-mode . eglot-ensure)
+         (yaml-mode . eglot-ensure)
+         (yaml-ts-mode . eglot-ensure)
+         (rust-ts-mode . eglot-ensure))
+  :config
+  ;; エラー・警告の表示間隔を調整
+  (setq eglot-events-buffer-size 0)  ; イベントログを無効化（軽量化）
+  (setq eglot-autoshutdown t)  ; バッファを閉じたらサーバーを自動停止
+
+  ;; サポートされていない機能の警告を抑制
+  (setq eglot-ignored-server-capabilities '(:documentOnTypeFormattingProvider))
+
+  ;; Markdown用言語サーバーの設定
+  (add-to-list 'eglot-server-programs
+               '(markdown-mode . ("marksman" "server")))
+
+  ;; Dockerfile用言語サーバーの設定
+  (add-to-list 'eglot-server-programs
+               '(dockerfile-ts-mode . ("docker-langserver" "--stdio")))
+
+  ;; YAML用言語サーバーの設定
+  (add-to-list 'eglot-server-programs
+               '(yaml-mode . ("yaml-language-server" "--stdio")))
+  (add-to-list 'eglot-server-programs
+               '(yaml-ts-mode . ("yaml-language-server" "--stdio")))
+
+  ;; Rust用言語サーバーの設定
+  (add-to-list 'eglot-server-programs
+               '(rust-ts-mode . ("rust-analyzer"))))
+
+;; TypeScript/TSXファイルの自動認識
+(use-package typescript-ts-mode
+  :ensure nil  ; 組み込みパッケージ (Emacs 29+)
+  :mode (("\\.ts\\'" . typescript-ts-mode)
+         ("\\.tsx\\'" . tsx-ts-mode))
+  :config
+  (setq typescript-ts-mode-indent-offset 2))
+
+;; Markdown
+(use-package markdown-mode
+  :ensure
+  :mode (("\\.md\\'" . markdown-mode)
+         ("\\.markdown\\'" . markdown-mode))
+  :config
+  (setq markdown-command "marked"))  ; プレビュー用コマンド（オプション）
+
+
+;; Dockerfile
+(use-package dockerfile-ts-mode
+  :ensure nil
+  :mode (("\\(?:Dockerfile\\(?:\\..*\\)?\\|\\.[Dd]ockerfile\\)\\'" . dockerfile-ts-mode)))
+
+;; YAML
+(use-package yaml-mode
+  :ensure
+  :mode (("\\.ya?ml\\'" . yaml-mode))
+  :config
+  (add-hook 'yaml-mode-hook
+            (lambda ()
+              (define-key yaml-mode-map "\C-m" 'newline-and-indent))))
+
+;; Rust
+(use-package rust-ts-mode
+  :ensure nil
+  :mode "\\.rs\\'"
+  :config
+  (setq rust-ts-mode-indent-offset 2))
+
+;; いつかちゃんと実装したい
+;; LLM抽象化レイヤー
+;; (use-package llm
+;;   :ensure (:host github :repo "ahyatt/llm")
+;;   :init
+;;   (require 'llm-ollama))
+
+;; ;; Copilot風自動インライン補完（Qwen使用）
+;; (defvar qwen-completion-overlay nil
+;;   "補完候補を表示するためのオーバーレイ")
+
+;; (defvar qwen-completion-timer nil
+;;   "補完候補を自動取得するためのタイマー")
+
+;; (defvar qwen-completion-delay 0.5
+;;   "入力停止後、補完候補を取得するまでの遅延（秒）")
+
+;; (defvar qwen-last-point nil
+;;   "最後に補完を実行したポイント")
+
+;; (defvar qwen-completion-active nil
+;;   "補完リクエストが進行中かどうか")
+
+;; (defun qwen-clear-completion ()
+;;   "補完候補をクリア"
+;;   (when qwen-completion-overlay
+;;     (delete-overlay qwen-completion-overlay)
+;;     (setq qwen-completion-overlay nil)))
+
+;; (defun qwen-inline-complete-auto ()
+;;   "Qwenを使って自動的にインライン補完を実行"
+;;   (when (and (not qwen-completion-active)
+;;              (eq (current-buffer) (window-buffer (selected-window))))
+;;     (let* ((current-buffer (current-buffer))
+;;            (current-point (point))
+;;            (context-start (max (point-min) (- (point) 2000)))
+;;            (prefix (buffer-substring-no-properties context-start current-point))
+;;            (suffix (buffer-substring-no-properties
+;;                     current-point
+;;                     (min (point-max) (+ current-point 500))))
+;;            ;; Qwen2.5-CoderのFIM形式
+;;            (prompt (format "<|fim_prefix|>%s<|fim_suffix|>%s<|fim_middle|>"
+;;                            prefix suffix)))
+
+;;       ;; 既存の補完をクリア
+;;       (qwen-clear-completion)
+
+;;       (setq qwen-completion-active t)
+;;       (setq qwen-last-point current-point)
+
+;;       ;; Ollamaに非同期リクエスト
+;;       (llm-chat-async
+;;        (make-llm-ollama
+;;         :chat-model "qwen2.5-coder:7b"
+;;         :default-chat-non-standard-params '(("num_ctx" . 8192)
+;;                                              ("temperature" . 0.2)
+;;                                              ("top_p" . 0.95)))
+;;        (llm-make-simple-chat-prompt prompt)
+;;        (lambda (response)
+;;          (setq qwen-completion-active nil)
+;;          (with-current-buffer current-buffer
+;;            (when (and response
+;;                       (not (string-empty-p response))
+;;                       (eq (point) current-point)
+;;                       (eq (current-buffer) (window-buffer (selected-window))))
+;;              (let ((completion (string-trim response)))
+;;                ;; オーバーレイを作成して補完候補を表示
+;;                (setq qwen-completion-overlay (make-overlay (point) (point)))
+;;                (overlay-put qwen-completion-overlay
+;;                             'after-string
+;;                             (propertize completion 'face '(:foreground "gray50")))))))
+;;        (lambda (type error-data)
+;;          (setq qwen-completion-active nil))))))
+
+;; (defun qwen-accept-completion ()
+;;   "表示された補完候補を受け入れる"
+;;   (interactive)
+;;   (when qwen-completion-overlay
+;;     (let ((completion (overlay-get qwen-completion-overlay 'after-string)))
+;;       (when completion
+;;         (insert (substring-no-properties completion))
+;;         (qwen-clear-completion)))))
+
+;; (defun qwen-schedule-completion ()
+;;   "補完候補の取得をスケジュール"
+;;   (when qwen-completion-timer
+;;     (cancel-timer qwen-completion-timer))
+;;   (qwen-clear-completion)
+;;   (setq qwen-completion-timer
+;;         (run-with-idle-timer qwen-completion-delay nil #'qwen-inline-complete-auto)))
+
+;; (defun qwen-post-command ()
+;;   "コマンド実行後のフック"
+;;   (when (and qwen-copilot-mode
+;;              (not (minibufferp)))
+;;     (if (and qwen-completion-overlay
+;;              (or (not (eq (point) qwen-last-point))
+;;                  (eq this-command 'self-insert-command)))
+;;         (qwen-clear-completion))
+;;     (when (eq this-command 'self-insert-command)
+;;       (qwen-schedule-completion))))
+
+;; ;; グローバルマイナーモード
+;; (define-minor-mode qwen-copilot-mode
+;;   "Copilot風の自動インライン補完モード"
+;;   :global t
+;;   :lighter " QCopilot"
+;;   (if qwen-copilot-mode
+;;       (progn
+;;         (add-hook 'post-command-hook #'qwen-post-command)
+;;         (global-set-key (kbd "TAB")
+;;                         (lambda ()
+;;                           (interactive)
+;;                           (if qwen-completion-overlay
+;;                               (qwen-accept-completion)
+;;                             (indent-for-tab-command)))))
+;;     (remove-hook 'post-command-hook #'qwen-post-command)
+;;     (qwen-clear-completion)
+;;     (when qwen-completion-timer
+;;       (cancel-timer qwen-completion-timer))))
+
+;; ;; デフォルトで有効化（prog-modeのみ）
+;; (add-hook 'prog-mode-hook
+;;           (lambda ()
+;;             (qwen-copilot-mode 1)))
