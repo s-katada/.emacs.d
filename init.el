@@ -1,13 +1,12 @@
-;;; package --- パッケージマネージャーのアルパカをインストール
-
-(defvar elpaca-installer-version 0.8)
+;; package manager 'elpaca'の設定
+(defvar elpaca-installer-version 0.11)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
 (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
 (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
 (defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
-                              :ref nil :depth 1
-                              :files (:defaults "elpaca-test.el" (:exclude "extensions"))
-                              :build (:not elpaca--activate-package)))
+			      :ref nil :depth 1 :inherit ignore
+			      :files (:defaults "elpaca-test.el" (:exclude "extensions"))
+			      :build (:not elpaca--activate-package)))
 (let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
        (build (expand-file-name "elpaca/" elpaca-builds-directory))
        (order (cdr elpaca-order))
@@ -15,65 +14,50 @@
   (add-to-list 'load-path (if (file-exists-p build) build repo))
   (unless (file-exists-p repo)
     (make-directory repo t)
-    (when (< emacs-major-version 28) (require 'subr-x))
+    (when (<= emacs-major-version 28) (require 'subr-x))
     (condition-case-unless-debug err
-        (if-let* ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
-                  ((zerop (apply #'call-process `("git" nil ,buffer t "clone"
-                                                  ,@(when-let* ((depth (plist-get order :depth)))
-                                                      (list (format "--depth=%d" depth) "--no-single-branch"))
-                                                  ,(plist-get order :repo) ,repo))))
-                  ((zerop (call-process "git" nil buffer t "checkout"
-                                        (or (plist-get order :ref) "--"))))
-                  (emacs (concat invocation-directory invocation-name))
-                  ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
-                                        "--eval" "(byte-recompile-directory \".\" 0 'force)")))
-                  ((require 'elpaca))
-                  ((elpaca-generate-autoloads "elpaca" repo)))
-            (progn (message "%s" (buffer-string)) (kill-buffer buffer))
-          (error "%s" (with-current-buffer buffer (buffer-string))))
+	(if-let* ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
+		  ((zerop (apply #'call-process `("git" nil ,buffer t "clone"
+						  ,@(when-let* ((depth (plist-get order :depth)))
+						      (list (format "--depth=%d" depth) "--no-single-branch"))
+						  ,(plist-get order :repo) ,repo))))
+		  ((zerop (call-process "git" nil buffer t "checkout"
+					(or (plist-get order :ref) "--"))))
+		  (emacs (concat invocation-directory invocation-name))
+		  ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
+					"--eval" "(byte-recompile-directory \".\" 0 'force)")))
+		  ((require 'elpaca))
+		  ((elpaca-generate-autoloads "elpaca" repo)))
+	    (progn (message "%s" (buffer-string)) (kill-buffer buffer))
+	  (error "%s" (with-current-buffer buffer (buffer-string))))
       ((error) (warn "%s" err) (delete-directory repo 'recursive))))
   (unless (require 'elpaca-autoloads nil t)
     (require 'elpaca)
     (elpaca-generate-autoloads "elpaca" repo)
-    (load "./elpaca-autoloads")))
+    (let ((load-source-file-function nil)) (load "./elpaca-autoloads"))))
 (add-hook 'after-init-hook #'elpaca-process-queues)
 (elpaca `(,@elpaca-order))
+
+;; use-packageでensureでパッケージをインストールする時にelpacaを利用する様にする
 (elpaca elpaca-use-package
-  ;;Enable use-package :ensure support for Elpaca.
   (elpaca-use-package-mode))
-(elpaca-wait)
 
-;; スクロールの設定
-(setq scroll-conservatively 50)
-
-;; 警告レベルを設定
-(setq warning-minimum-level :error)
-(setq switch-to-buffer-in-dedicated-window nil)
-
-;; ビープ音を消す
-(setq ring-bell-function 'ignore)
-(setq visible-bell 1)
-
-;; エレクトリックインデントを有効にする
-(electric-pair-mode t)
-
-;; package.elを使わない
-(setq package-enable-at-startup nil)
-
-;; welcome表示を削除
+;; keybind
 (setq inhibit-startup-message t)
+(global-set-key (kbd "C-h") 'backward-delete-char)
+(global-set-key (kbd "s-z") 'undo)
+(global-set-key (kbd "s-Z") 'undo-redo)
+(global-set-key (kbd "C-;") 'comment-line)
+(global-set-key (kbd "C-c C-c") 'scroll-down-command)
 
-;; macではlsに--diredオプションがないので削除する
-(when (string= system-type "darwin")
-  (setq dired-use-ls-dired nil))
+;; toolbarを非表示にする
+(tool-bar-mode -1)
 
 ;; yes noで答えるのを y nにする
 (fset 'yes-or-no-p 'y-or-n-p)
 
-;; *.~ とかのバックアップファイルを作らない
-(setq make-backup-files nil)
-;; .#* とかのバックアップファイルを作らない
-(setq auto-save-default nil)
+;; スクロールの設定
+(setq scroll-conservatively 50)
 
 ;; 現在行にハイライトを設定
 (global-hl-line-mode t)
@@ -83,69 +67,6 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(hl-line ((t (:background "grey20")))))
-
-;; キーバインド
-(bind-key "C-h" 'backward-delete-char)
-(bind-key "s-z" 'undo)
-(bind-key "s-Z" 'undo-redo)
-(bind-key "C-;" 'comment-line)
-(bind-key "C-c C-c" 'scroll-down-command)
-
-;; 画面上部のツールバーを削除
-(use-package tool-bar
-  :if (display-graphic-p)
-  :config
-  (tool-bar-mode -1))
-
-;; ;; テーマ
-;; (use-package modus-themes
-;;   :ensure t
-;;   :config
-;;   (load-theme 'modus-vivendi t))
-
-;; modeline
-(use-package doom-modeline
-  :ensure
-  :config
-  ;; 表示する情報を設定する
-  (setq doom-modeline-height 20
-        doom-modeline-bar-width 3
-        doom-modeline-buffer-file-name-style 'truncate-upto-project
-        doom-modeline-icon (display-graphic-p)
-        doom-modeline-major-mode-color-icon t
-        doom-modeline-major-mode-icon t
-        doom-modeline-modal-icon t
-        doom-modeline-enable-word-count t
-        doom-modeline-buffer-encoding t
-        doom-modeline-vcs-max-length 40
-        doom-modeline-env-version t
-        doom-modeline-env-enable-ruby t
-        doom-modeline-check-simple-format t
-        doom-modeline-indent-info t)
-  (set-face-attribute 'mode-line nil
-                      :background "#4b0082"
-                      :foreground "white")
-  (set-face-attribute 'mode-line-inactive nil
-                      :background "black"
-                      :foreground "gray"))
-
-;; ディレクトリを表示する
-(use-package treemacs
-  :ensure t
-  :defer t
-  :bind
-  ("s-b" . treemacs)
-  :custom
-  (treemacs-width 50)
-  :config
-  (progn
-    (setq treemacs-follow-mode t)
-    (setq treemacs-filewatch-mode t)
-    (setq treemacs-fringe-indicator-mode 'always)
-    (setq treemacs-show-cursor t)
-    (setq treemacs-show-hidden-files t)
-    (setq treemacs-silent-filewatch 'post-command-hook))
-  (treemacs-git-mode 'extended))
 
 ;; 空白を見やすくする
 (use-package whitespace
@@ -164,21 +85,17 @@
   (setq whitespace-global-modes '(not org-mode))
   :diminish whitespace-mode)
 
-;; ホットリロード的なことをする
-(use-package autorevert
-  :init
-  (setq auto-revert-mode-text "Auto-Reload")
-  :config
-  (global-auto-revert-mode t))
+;; I-searchを強化する
+(use-package consult
+  :ensure
+  :bind (
+	 ("C-s" . consult-line)
+	 ("C-x b" . consult-buffer)
+	 ("M-g g" . consult-goto-line)
+	 ("C-x C-b" . consult-recent-file)
+	 ("C-x C-i" . consult-projectile)))
 
-;; 行数表示
-(use-package display-line-numbers
-  :config
-  (global-display-line-numbers-mode)
-  :custom
-  (cursor-type 'bar))
-
-;; 補完システム
+;; ミニバッファのUIと操作を拡張する
 (use-package vertico
   :ensure
   :init
@@ -193,41 +110,6 @@
   (setq completion-styles '(orderless basic)
         completion-category-defaults nil
         completion-category-overrides '((file (styles partial-completion)))))
-
-;; I-searchを強化する
-(use-package consult
-  :ensure t
-  :init
-  (load-theme 'modus-vivendi t)
-  :bind (
-         ("C-s" . consult-line)
-         ("C-x b" . consult-buffer)
-	 ("M-g g" . consult-goto-line)
-	 ("C-x C-b" . consult-recent-file)
-	 ("C-x C-i" . consult-projectile))
-  :config
-  ;; 一部のコマンドを自動的に`consult`に置き換える
-  (setq consult-async-min-input 2)  ;; 非同期検索の最小入力数
-  )
-
-;; プロジェクト内検索を便利にする
-(use-package projectile
-  :ensure t
-  :init
-  (projectile-mode))
-
-;; consultとprojectileを連携させる
-(use-package consult-projectile
-  :ensure t
-  :after (consult projectile))
-
-;; 補完候補に説明文を付与する
-(use-package marginalia
-  :ensure t
-  :bind (:map minibuffer-local-map
-         ("M-A" . marginalia-cycle))
-  :init
-  (marginalia-mode))
 
 ;; ファイルの履歴
 (use-package recentf
@@ -262,7 +144,7 @@
 
 ;; 一気に編集できるようにする
 (use-package multiple-cursors
-  :ensure t
+  :ensure
   :config
   (define-key mc/keymap (kbd "C-h") 'delete-backward-char)
   (define-key global-map (kbd "C-x C-a") 'mc/mark-all-like-this)
@@ -270,173 +152,105 @@
   (define-key global-map (kbd "C-x C-e") 'mc/edit-ends-of-lines)
   (define-key global-map (kbd "C-x C-r") 'mc/mark-all-in-region-regexp))
 
-;; ruby
-(use-package ruby-mode
-  :mode (("\\.rb\\'" . ruby-mode)
-	 ("\\.ruby\\'" . ruby-mode))
-  :custom
-  (lsp-solargraph-use-bundler nil)
-  (lsp-solargraph-extra-options '("--plugin" "rubocop")))
+(use-package vterm
+    :ensure t
+    :bind (("C-c t" . 'vterm))
+    :config
+    ;; 文字エンコーディングの設定
+    (setq vterm-environment '("LANG=en_US.UTF-8" "LC_ALL=en_US.UTF-8" "TERM=xterm-256color"))
+    ;; シェルの設定を明示的に指定
+    (setq vterm-shell (getenv "SHELL"))
+    ;; バッファサイズを大きくする
+    (setq vterm-buffer-name-string "vterm %s")
+    ;; ターミナルの最大行数
+    (setq vterm-max-scrollback 10000)
+    ;; 256色サポート
+    (setq vterm-term-environment-variable "xterm-256color")
+    ;; vterm内でもC-hをバックスペースとして使用
+    (define-key vterm-mode-map (kbd "C-h") 'vterm-send-backspace)
+    ;; vterm内で行番号を非表示にする
+    (add-hook 'vterm-mode-hook (lambda () (display-line-numbers-mode -1))))
 
-;; web-mode
-(use-package web-mode
-  :ensure t
-  :mode (("\\.html?\\'" . web-mode)
-         ("\\.ts\\'" . web-mode)
-         ("\\.tsx\\'" . web-mode))
+(use-package transient
+  :ensure
   :config
-  (setq web-mode-markup-indent-offset 2
-        web-mode-code-indent-offset 2
-        web-mode-css-indent-offset 2
-        web-mode-script-padding 2
-        web-mode-block-padding 2
-        web-mode-comment-style 2
-	web-mode-style-padding 2
-        web-mode-enable-auto-closing t
-        web-mode-enable-auto-pairing t
-        web-mode-enable-css-colorization t
-        web-mode-enable-auto-indentation t
-	web-mode-enable-auto-quoting nil)
-  (add-hook 'web-mode-hook
-            (lambda ()
-	      (setq web-mode-enable-auto-indentation nil)
-              (setq-local indent-tabs-mode nil))))
+  ;; transient内でもC-hをバックスペースとして使用
+  (define-key transient-base-map (kbd "C-h") 'backward-delete-char)
+  (define-key transient-sticky-map (kbd "C-h") 'backward-delete-char))
 
-;; typescript-mode
-(use-package typescript-mode
-  :ensure t)
-
-;; rust-mode
-(use-package rust-mode
-  :ensure t
-  :mode (("\\.rs\\'" . rust-mode))
+(use-package claude-code-ide
+  :ensure (:host github :repo "manzaltu/claude-code-ide.el")
+  :bind ("C-c C-'" . claude-code-ide-menu)
+  :defer t
   :config
-  (setq indent-tabs-mode nil))
+  (claude-code-ide-emacs-tools-setup))
 
-;; csharp-mode
-(use-package csharp-mode
-  :mode (("\\.cs\\'" . csharp-mode)))
-
-;; yaml-mode
-(use-package yaml-mode
-  :ensure t
-  :mode (("\\.yml\\'" . yaml-mode)
-	 ("\\.yaml\\'" . yaml-mode)))
-
-;; haml-mode
-(use-package haml-mode
-  :ensure t
-  :mode (("\\.haml\\'" . haml-mode)))
-
-;; lspの設定
-(use-package lsp-mode
-  :ensure t
-  :hook
-  ((ruby-mode . lsp)
-   (web-mode . lsp)
-   (css-mode . lsp)
-   (rust-mode . lsp)
-   (csharp-mode .lsp))
-  :config
-  ;; LSPのフォーマット機能を無効にする
-  (setq lsp-enable-on-type-formatting nil
-        lsp-enable-indentation nil))
-
-(use-package lsp-ui
-  :ensure t
-  :commands lsp-ui-mode
-  :hook
-  (lsp-mode . lsp-ui-mode)
-  :bind (:map lsp-ui-mode-map
-	      ("C-x C-d" . lsp-ui-doc-glance))
-  :custom
-  (lsp-ui-doc-enable t)
-  (lsp-ui-doc-show-with-cursor t)
-  (lsp-ui-doc-border "cyan")
-  (lsp-ui-doc-position 'at-point)
-  (lsp-ui-doc-alignment 'frame)
-  (lsp-ui-doc-max-width 150)
-  (lsp-ui-doc-max-height 80)
-  (lsp-ui-doc-header t)
-  (lsp-ui-doc-delay 1.0)
-  (lsp-ui-doc-include-signature t)
-  (lsp-ui-doc-use-webkit t)
-  (lsp-ui-peek-enable t)
-  (lsp-ui-peek-show-directory t)
-  (lsp-eldoc-enable-hover t)
-  (lsp-ui-peek-peek-height 20)
-  (lsp-ui-sideline-enable t)
-  :bind (:map lsp-ui-mode-map
-	      ("M-." . lsp-ui-peek-find-definitions)
-	      ("M-?" . lsp-ui-peek-find-references)
-	      ("C-." . lsp-ui-peek-jump-forward)
-	      ("C-," . lsp-ui-peek-jump-backward)))
-
-;; flymakeを見やすくする
-(use-package flymake
-  :hook (prog-mode . flymake-mode)
-  :config
-  (set-face-attribute 'flymake-error nil
-		      :underline "red"
-		      :weight 'bold)
-  (set-face-attribute 'flymake-warning nil
-		      :underline "yellow"
-		      :weight 'bold)
-  (set-face-attribute 'flymake-note nil
-		      :underline "green"
-		      :weight 'bold))
-
-(use-package eldoc-box
-  :ensure t
-  :hook
-  (eldoc-mode . eldoc-box-hover-mode))
-  ;; :config
-  ;; (setq eldoc-mode-line-string t))
-
-;; (use-package tree-sitter
-;;   :ensure t
-;;   :config
-;;   (require 'tree-sitter-langs)
-;;   (global-tree-sitter-mode)
-;;   (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
-
-;; 補完候補表示
-(use-package company
-  :ensure t
-  :config
-  (global-company-mode 1)
-  (setq company-minimum-prefix-length 1)
-  (setq company-idle-delay 0.1)
-  (setq company-dabbrev-downcase nil)
-  :bind
-  (:map company-active-map
-        ("C-h" . 'backward-delete-char)))
-
-(use-package prog-mode
-  :hook(prog-mode . copilot-mode))
-
-(use-package dockerfile-mode
-  :ensure t
-  :mode (("\\Dockerfile\\'" . docker-mode)
-	 ("\\dockerfile\\'" . docker--mode)))
-
-;; copilotの設定
-(use-package copilot
-  :ensure t
+;; ホットリロード的なことをする
+(use-package autorevert
   :init
-  (defun my-tab ()
-    (interactive "*")
-    (or (copilot-accept-completion)
-	(company-indent-or-complete-common nil)))
-  (bind-key "TAB" 'my-tab)
-  :bind(("M-]" . copilot-next-completion)
-	("M-[" . copilot-previous-completion))
+  (setq auto-revert-mode-text "Auto-Reload")
   :config
-  (setq copilot-indent-offset-warning-disable t))
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(package-selected-packages
-   '(yaml-mode web-mode vertico typescript-mode rust-mode projectile orderless multiple-cursors marginalia haml-mode consult company ace-window)))
+  (global-auto-revert-mode t))
+
+;; 行数表示
+(use-package display-line-numbers
+  :config
+  (global-display-line-numbers-mode)
+  :custom
+  (cursor-type 'bar))
+
+;; ディレクトリを左サイドバーに表示する
+;; ディレクトリを表示する
+(use-package treemacs
+  :ensure
+  :defer
+  :bind
+  ("s-b" . treemacs)
+  :custom
+  (treemacs-width 50)
+  :config
+  (progn
+    (setq treemacs-follow-mode t)
+    (setq treemacs-filewatch-mode t)
+    (setq treemacs-fringe-indicator-mode 'always)
+    (setq treemacs-show-hidden-files t)
+    (setq treemacs-silent-filewatch 'post-command-hook))
+  (treemacs-git-mode 'extended))
+
+;; プロジェクト内検索を便利にする
+(use-package projectile
+  :ensure
+  :init
+  (projectile-mode))
+
+;; consultとprojectileを連携させる
+(use-package consult-projectile
+  :ensure
+  :after (consult projectile))
+
+;; テーマ
+(use-package doom-themes
+  :ensure
+  :config
+  (setq doom-themes-enable-bold t
+        doom-themes-enable-italic t)
+  (load-theme 'doom-one t)
+  (doom-themes-org-config))
+
+;; アイコン（doom-modelineに必要）
+(use-package nerd-icons
+  :ensure)
+
+;; モードライン
+(use-package doom-modeline
+  :ensure
+  :init (doom-modeline-mode 1)
+  :config
+  (setq doom-modeline-height 25
+        doom-modeline-icon t))
+
+;; 括弧の色分け
+(use-package rainbow-delimiters
+  :ensure
+  :hook (prog-mode . rainbow-delimiters-mode))
+
