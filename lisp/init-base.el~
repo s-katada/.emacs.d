@@ -1,0 +1,43 @@
+;;; init-base.el --- Basic settings and keybindings -*- lexical-binding: t -*-
+
+;;; Commentary:
+;; Basic Emacs settings, keybindings, and core configurations
+
+;;; Code:
+
+;; スタートアップメッセージを非表示
+(setq inhibit-startup-message t)
+
+;; キーバインド
+(global-set-key (kbd "C-h") 'backward-delete-char)
+(global-set-key (kbd "s-z") 'undo)
+(global-set-key (kbd "s-Z") 'undo-redo)
+(global-set-key (kbd "C-;") 'comment-line)
+(global-set-key (kbd "C-c C-c") 'scroll-down-command)
+
+;; toolbarを非表示にする
+(tool-bar-mode -1)
+
+;; yes noで答えるのを y nにする
+(fset 'yes-or-no-p 'y-or-n-p)
+
+;; スクロールの設定
+(setq scroll-conservatively 50)
+
+;; 現在行にハイライトを設定
+(global-hl-line-mode t)
+(custom-set-faces
+ '(hl-line ((t (:background "grey20")))))
+
+;; エレクトリックインデントを有効にする
+(electric-pair-mode t)
+
+;; ファイルの履歴
+(use-package recentf
+  :config
+  (recentf-mode 1)
+  (setq recentf-max-menu-items 50)
+  (setq recentf-max-saved-items 1000))
+
+(provide 'init-base)
+;;; init-base.el ends here
