@@ -8,3 +8,20 @@ tree-sitter
 url
 projects
 transient
+# 秘密情報・個人情報の混入を防ぐ
+.env.el
+ascii-logo.txt
+.authinfo*
+*.gpg
+*~
+.#*
+\#*#
+.recentf
+bookmarks
+history
+savehist
+places
+tramp
+eln-cache
+elpa
+straight
